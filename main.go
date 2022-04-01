@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -16,10 +17,14 @@ viper 支持的配置很多
 从远程配置系统（etcd或consul）读取，并观察变化
 从命令行标志读取
 从缓冲区读取
+
+配置文件在同一个目录下，最好不一同名
+
 */
 func main() {
-	ReadIni()
 	ReadToStruct()
+	ReadIni()
+
 }
 
 type Config struct {
@@ -37,11 +42,11 @@ func ReadToStruct() {
 	// }
 	// fmt.Printf("path: %v\n", path)
 	//v.AddConfigPath(path)
-	// v.AddConfigPath("./conf") //路径//搞蒙了，有时能出来，有时出不来
-	// v.SetConfigFile("config.yaml")
-	// v.SetConfigType("yaml")
+	v.AddConfigPath("./conf") //路径//搞蒙了，有时能出来，有时出不来
+	v.SetConfigName("conf_yaml")
+	v.SetConfigType("yaml")
 
-	v.SetConfigFile("./conf/config.yaml")
+	//v.SetConfigFile("./conf/config.yaml")
 
 	err := v.ReadInConfig() //读取配置
 	if err != nil {
@@ -58,12 +63,15 @@ func ReadToStruct() {
 }
 
 func ReadIni() {
+	path, _ := os.Getwd()
+	fmt.Printf("path: %v\n", path)
+	// viper.AddConfigPath(path + "/conf") //路径//搞蒙了，有时能出来，有时出不来
+	// viper.SetConfigFile("config.ini")
 	v := viper.New()
-	v.SetConfigFile("./conf/config.ini")
-
-	// v.AddConfigPath("./conf") //路径//搞蒙了，有时能出来，有时出不来
-	// v.SetConfigName("config") //名称
-	// v.SetConfigType("ini")    //类型
+	//v.SetConfigFile("config.ini")//可以
+	v.SetConfigName("conf_ini") //名称
+	v.SetConfigType("ini")      //类型
+	v.AddConfigPath("./conf")   //路径//搞蒙了，有时能出来，有时出不来
 
 	err := v.ReadInConfig() //读取配置
 	if err != nil {
@@ -76,7 +84,7 @@ func ReadIni() {
 
 	v.WatchConfig()
 	v.OnConfigChange(func(in fsnotify.Event) {
-		fmt.Println("文件被修改：")
+		fmt.Println("文件被修改：", in.Name)
 		s := v.GetString("db.username")
 		p := v.GetString("db.password")
 		port := v.GetInt64("db.port")
